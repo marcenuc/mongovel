@@ -246,7 +246,7 @@ class Model implements ArrayableInterface, JsonableInterface
 		
 		return new Collection($items);
 	}
-	
+
 	/**
 	 * Performs a Map Reduce on this collection
 	 * 
@@ -266,7 +266,29 @@ class Model implements ArrayableInterface, JsonableInterface
 			'out'    => $out,
 		));
 	}
-	
+
+	/**
+	 * Performs an aggregate on this collection
+	 *
+	 * Same parameters as the stock MongoCollection::aggregate method
+	 * @see http://www.php.net/manual/en/mongocollection.aggregate.php
+	 */
+	public static function aggregate()
+	{
+		$res = call_user_method_array('aggregate', static::getCollection(), func_get_args());
+		
+		if ($res['ok'] == 1) {
+			return $res['results'];
+		}
+		else {
+			throw new MongovelException(sprintf(
+				'Error running aggregate on %s: %s',
+				static::getCollectionName(),
+				$res['errmsg']
+			));
+		}
+	}
+
 	public static function dbCommand($command, $params)
 	{
 		$params[$command] = static::getCollectionName();
@@ -277,7 +299,7 @@ class Model implements ArrayableInterface, JsonableInterface
 		}
 		else {
 			throw new MongovelException(sprintf(
-				'Error running %s command of %s: %s',
+				'Error running %s command on %s: %s',
 				$command,
 				static::getCollectionName(),
 				$res['errmsg']
