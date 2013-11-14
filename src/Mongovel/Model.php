@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Contracts\ArrayableInterface;
 use Illuminate\Support\Contracts\JsonableInterface;
 use InvalidArgumentException;
+use MongoCode;
 use MongoCollection;
 use MongoCursor;
 use MongoDate;
@@ -242,6 +243,26 @@ class Model implements ArrayableInterface, JsonableInterface
 		}
 		
 		return new Collection($items);
+	}
+	
+	/**
+	 * Performs a Map Reduce on this collection
+	 * 
+	 * @param  MongoCode     $map
+	 * @param  MongoCode     $reduce
+	 * @param  array         $query
+	 * @param  array|string  $out     Out collection (default to inline)
+	 * 
+	 * @return array|string  The output collection or the actual data if the output was inline
+	 */
+	public static function mapReduce(MongoCode $map, MongoCode $reduce, $query = array(), $out = array('inline' => true))
+	{
+		return static::dbCommand('mapreduce', array(
+			'map'    => $map,
+			'reduce' => $reduce,
+			'query'  => $query,
+			'out'    => $out,
+		));
 	}
 	
 	public static function dbCommand($command, $params)
