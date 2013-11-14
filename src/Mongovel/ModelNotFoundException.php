@@ -1,3 +1,3 @@
 <?php namespace Mongovel;
 
-class ModelNotFoundException extends \RuntimeException {}
+class ModelNotFoundException extends MongovelException {}

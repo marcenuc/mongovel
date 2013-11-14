@@ -50,6 +50,16 @@ class Model implements ArrayableInterface, JsonableInterface
 	}
 
 	/**
+	 * Get the database where the model is stored
+	 *
+	 * @return MongovelDB
+	 */
+	public static function db()
+	{
+		return Mongovel::db();
+	}
+
+	/**
 	 * Get the Collection name of the model
 	 *
 	 * @return string
@@ -77,7 +87,7 @@ class Model implements ArrayableInterface, JsonableInterface
 	{
 		$collectionName = static::getCollectionName();
 
-		return Mongovel::db()->$collectionName;
+		return static::db()->$collectionName;
 	}
 
 	/**
@@ -221,22 +231,35 @@ class Model implements ArrayableInterface, JsonableInterface
 	 */
 	public static function textSearch($q, $filter = array())
 	{
-		$collectionName = static::getCollectionName();
-		
-		$search = Mongovel::db()->command(array(
-			'text'   => $collectionName,
+		$search = static::dbCommand('text', array(
 			'search' => $q,
 			'filter' => $filter,
 		));
 		
 		$items = array();
-		if (isset($search['results'])) {
-			foreach ($search['results'] as $r) {
-				$items[] = static::create($r['obj']);
-			}
+		foreach ($search as $r) {
+			$items[] = static::create($r['obj']);
 		}
 		
 		return new Collection($items);
+	}
+	
+	public static function dbCommand($command, $params)
+	{
+		$params[$command] = static::getCollectionName();
+		$res = call_user_method_array('command', static::db(), $params);
+		
+		if ($res['ok'] == 1) {
+			return $res['results'];
+		}
+		else {
+			throw new MongovelException(sprintf(
+				'Error running %s command of %s: %s',
+				$command,
+				static::getCollectionName(),
+				$res['errmsg']
+			));
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////
