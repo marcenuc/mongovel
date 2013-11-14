@@ -177,7 +177,9 @@ class Model implements ArrayableInterface, JsonableInterface
 		
 		// Convert results if possible
 		$results = call_user_func_array(array(static::getCollection(), $method), $parameters);
-		if ($results instanceof MongoCursor) $results = new Cursor($results, get_called_class(), $method);
+		if ($results instanceof MongoCursor || $method == 'findAndModify') {
+			$results = new Cursor($results, get_called_class(), $method);
+		}
 		
 		return $results;
 	}
